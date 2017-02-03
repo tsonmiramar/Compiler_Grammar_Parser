@@ -177,7 +177,6 @@ Type_Specifier_Nonarray :	T_Void  { $$ = Type::voidType; }
                		|    	T_Mat2 	{ $$ = Type::mat2Type; }
                		|    	T_Mat3 	{ $$ = Type::mat3Type; }
                		|    	T_Mat4 	{ $$ = Type::mat4Type; }
-			|	T_Identifier { $$ = new NamedType(new Identifier(@1,$1));}
                		;
 %%
 
