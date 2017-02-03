@@ -59,6 +59,10 @@ void FnDecl::SetFunctionBody(Stmt *b) {
     (body=b)->SetParent(this);
 }
 
+void FnDecl::AppendParameterDeclaration(VarDecl* varDelc) {
+    formals->Append(varDelc);
+}
+
 void FnDecl::PrintChildren(int indentLevel) {
     if (returnType) returnType->Print(indentLevel+1, "(return type) ");
     if (returnTypeq) returnTypeq->Print(indentLevel+1, "(return type qualifier) ");

@@ -45,6 +45,9 @@ void yyerror(const char *msg); // standard error-handling routine
     char identifier[MaxIdentLen+1]; // +1 for terminating null
     Decl *decl;
     List<Decl*> *declList;
+    VarDecl* vardecl;
+    FnDecl *fnDecl;
+    Type* type;
 }
 
 
@@ -85,11 +88,18 @@ void yyerror(const char *msg); // standard error-handling routine
  * of the union named "declList" which is of type List<Decl*>.
  * pp2: You'll need to add many of these of your own.
  */
-%type <declList>  DeclList
-%type <decl>      Decl
-
-
-
+%type <declList>    DeclList
+%type <decl>        Decl
+%type <fnDecl> 	    Function_Prototype
+%type <fnDecl>	    Function_Declarator
+%type <fnDecl>	    Function_Header
+%type <fnDecl>	    Function_Header_With_Params
+%type <vardecl>     Parameter_Declaration
+%type <vardecl>     Parameter_Declarator
+%type <type>	    Parameter_Type_Specifier
+%type <type>	    Fully_Specified_Type
+%type <type>	    Type_Specifier
+%type <type>	    Type_Specifier_Nonarray 
 %%
 /* Rules
  * -----
@@ -113,14 +123,62 @@ DeclList  :    DeclList Decl        { ($$=$1)->Append($2); }
           |    Decl                 { ($$ = new List<Decl*>)->Append($1); }
           ;
 
-Decl      :    T_Int T_Identifier T_Semicolon {
-                                                 // replace it with your implementation
-                                                 Identifier *id = new Identifier(@2, $2);
-                                                 $$ = new VarDecl(id, Type::intType);
-                                              }
+Decl      :     Function_Prototype T_Semicolon { $$=$1; }
           ;
 
+Function_Prototype	:	Function_Declarator T_RightParen { $$=$1; }
 
+Function_Declarator	:	Function_Header	{ $$=$1; }
+			|	Function_Header_With_Params {$$ = $1;}
+			;
+
+Function_Header_With_Params : Function_Header Parameter_Declaration { $$ = $1; $$->AppendParameterDeclaration($2);}
+			    | Function_Header_With_Params ',' Parameter_Declaration { $$ = $1; $$->AppendParameterDeclaration($3); }
+			    ;
+
+Parameter_Declaration	:	Parameter_Declarator 	 { $$ = $1; }
+			|	Parameter_Type_Specifier { $$ = new VarDecl(new Identifier(@1,""), $1); }
+			;
+
+Parameter_Type_Specifier :	Type_Specifier { $$ = $1; }
+
+Parameter_Declarator	:	Type_Specifier T_Identifier { $$= new VarDecl(new Identifier(@2,$2), $1); }
+			;
+
+
+Function_Header		:	Fully_Specified_Type T_Identifier T_LeftParen {
+				$$ = new FnDecl(new Identifier(@2,$2), $1, new List<VarDecl*>());
+				}
+			;
+
+Fully_Specified_Type	:	Type_Specifier	{ $$=$1; }
+			;
+
+Type_Specifier		:	Type_Specifier_Nonarray { $$=$1; }
+			;
+
+Type_Specifier_Nonarray :	T_Void  { $$ = Type::voidType; }
+			|	T_Float { $$ = Type::floatType; }
+			|	T_Int	{ $$ = Type::intType;}
+			|	T_Uint	{ $$ = Type::uintType; }
+			|	T_Bool	{ $$ = Type::boolType; }
+			|    	T_Vec2 	{ $$ = Type::vec2Type; }
+               		|    	T_Vec3 	{ $$ = Type::vec3Type; }
+               		|    	T_Vec4 	{ $$ = Type::vec4Type; }
+			|	T_Ivec2 { $$ = Type::ivec2Type; }
+			|	T_Ivec3 { $$ = Type::ivec3Type; }
+			|	T_Ivec4 { $$ = Type::ivec4Type; }
+			|	T_Bvec2 { $$ = Type::bvec2Type; }
+			|	T_Bvec3 { $$ = Type::bvec3Type; }
+			|	T_Bvec4 { $$ = Type::bvec4Type; }
+			|	T_Uvec2 { $$ = Type::uvec2Type; }
+			|	T_Uvec3 { $$ = Type::uvec3Type; }
+			|	T_Uvec4	{ $$ = Type::uvec4Type; }
+               		|    	T_Mat2 	{ $$ = Type::mat2Type; }
+               		|    	T_Mat3 	{ $$ = Type::mat3Type; }
+               		|    	T_Mat4 	{ $$ = Type::mat4Type; }
+			|	T_Identifier { $$ = new NamedType(new Identifier(@1,$1));}
+               		;
 %%
 
 /* The closing %% above marks the end of the Rules section and the beginning

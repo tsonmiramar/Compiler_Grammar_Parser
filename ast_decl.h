@@ -67,6 +67,7 @@ class FnDecl : public Decl
     FnDecl(Identifier *name, Type *returnType, List<VarDecl*> *formals);
     FnDecl(Identifier *name, Type *returnType, TypeQualifier *returnTypeq, List<VarDecl*> *formals);
     void SetFunctionBody(Stmt *b);
+    void AppendParameterDeclaration(VarDecl* varDecl);
     const char *GetPrintNameForNode() { return "FnDecl"; }
     void PrintChildren(int indentLevel);
 };
@@ -77,5 +78,4 @@ class FormalsError : public FnDecl
     FormalsError() : FnDecl() { yyerror(this->GetPrintNameForNode()); }
     const char *GetPrintNameForNode() { return "FormalsError"; }
 };
-
 #endif
