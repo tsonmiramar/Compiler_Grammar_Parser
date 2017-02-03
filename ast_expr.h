@@ -201,6 +201,7 @@ class Call : public Expr
   public:
     Call() : Expr(), base(NULL), field(NULL), actuals(NULL) {}
     Call(yyltype loc, Expr *base, Identifier *field, List<Expr*> *args);
+    void AppendArgs(Expr* a);
     const char *GetPrintNameForNode() { return "Call"; }
     void PrintChildren(int indentLevel);
 };

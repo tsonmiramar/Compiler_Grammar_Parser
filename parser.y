@@ -48,6 +48,10 @@ void yyerror(const char *msg); // standard error-handling routine
     VarDecl* vardecl;
     FnDecl *fnDecl;
     Type* type;
+    Expr* expr;
+    Call* callexpr;
+    Identifier* ident;
+    Operator* op;
 }
 
 
@@ -96,10 +100,42 @@ void yyerror(const char *msg); // standard error-handling routine
 %type <fnDecl>	    Function_Header_With_Params
 %type <vardecl>     Parameter_Declaration
 %type <vardecl>     Parameter_Declarator
+%type <vardecl>	    Init_Declarator_List
+%type <vardecl>	    Single_Declaration
 %type <type>	    Parameter_Type_Specifier
 %type <type>	    Fully_Specified_Type
 %type <type>	    Type_Specifier
-%type <type>	    Type_Specifier_Nonarray 
+%type <type>	    Type_Specifier_Nonarray
+%type <ident>	    Variable_Identifier
+%type <ident>	    Function_Identifier
+%type <expr>	    Initializer
+%type <expr>	    Assignment_Expr 
+%type <expr>	    Conditional_Expr
+%type <expr>	    Logical_Or_Expr
+%type <expr>	    Logical_Xor_Expr
+%type <expr>	    Logical_And_Expr
+%type <expr>	    Inclusive_Or_Expr
+%type <expr>	    Exclusive_Or_Expr
+%type <expr>	    And_Expr
+%type <expr>	    Equality_Expr
+%type <expr>	    Relational_Expr
+%type <expr>	    Shift_Expr
+%type <expr>	    Additive_Expr
+%type <expr>	    Multiplicative_Expr
+%type <expr>	    Unary_Expr
+%type <expr>	    Postfix_Expr
+%type <expr>	    Primary_Expr
+%type <expr>	    Expr
+%type <expr>	    Integer_Expr
+%type <callexpr>    Function_Call
+%type <callexpr>    Function_Call_Or_Method
+%type <callexpr>    Function_Call_Generic
+%type <callexpr>    Function_Call_Header_With_Params
+%type <callexpr>    Function_Call_Header_No_Params
+%type <callexpr>    Function_Call_Header
+%type <op>	    Assignment_Operator
+%type <op>	    Unary_Operator
+
 %%
 /* Rules
  * -----
@@ -124,6 +160,7 @@ DeclList  :    DeclList Decl        { ($$=$1)->Append($2); }
           ;
 
 Decl      :     Function_Prototype T_Semicolon { $$=$1; }
+	  |	Init_Declarator_List T_Semicolon { $$=$1; }
           ;
 
 Function_Prototype	:	Function_Declarator T_RightParen { $$=$1; }
@@ -133,16 +170,149 @@ Function_Declarator	:	Function_Header	{ $$=$1; }
 			;
 
 Function_Header_With_Params : Function_Header Parameter_Declaration { $$ = $1; $$->AppendParameterDeclaration($2);}
-			    | Function_Header_With_Params ',' Parameter_Declaration { $$ = $1; $$->AppendParameterDeclaration($3); }
+			    | Function_Header_With_Params T_Comma Parameter_Declaration { $$ = $1; $$->AppendParameterDeclaration($3); }
 			    ;
 
 Parameter_Declaration	:	Parameter_Declarator 	 { $$ = $1; }
 			|	Parameter_Type_Specifier { $$ = new VarDecl(new Identifier(@1,""), $1); }
 			;
 
+Init_Declarator_List	:	Single_Declaration	{ $$ = $1; }
+			|	Init_Declarator_List T_Equal Initializer { $$ = $1; $$->SetInitializer($3);}
+			;
+
+Initializer		:	Assignment_Expr { $$ = $1; }
+			;
+
+Assignment_Expr		:	Conditional_Expr { $$ = $1; }
+			|	Unary_Expr Assignment_Operator Assignment_Expr { $$= new AssignExpr($1,$2,$3); }
+			;
+
+Assignment_Operator	:	T_Equal { $$ = new Operator(@1,"="); }
+			|	T_MulAssign { $$ = new Operator(@1,"*="); }
+			|	T_DivAssign { $$ = new Operator(@1,"/="); }
+			|	T_AddAssign { $$ = new Operator(@1,"+="); }
+			|	T_SubAssign { $$ = new Operator(@1,"-="); }
+			;	
+
+Conditional_Expr	:	Logical_Or_Expr { $$ = $1; }
+			|	Logical_Or_Expr T_Question Expr T_Colon Assignment_Expr { $$ = new SelectionExpr($1,$3,$5);}
+			;
+
+
+Logical_Or_Expr		:	Logical_Xor_Expr { $$ = $1; }
+			|	Logical_Or_Expr T_Or Logical_Xor_Expr { $$ = new LogicalExpr($1, new Operator(@2,"||"), $3);}
+			;
+
+Logical_Xor_Expr	:	Logical_And_Expr { $$ = $1; }
+			;
+
+Logical_And_Expr	:	Inclusive_Or_Expr { $$ = $1; }
+			|	Logical_And_Expr T_And Inclusive_Or_Expr { $$ = new LogicalExpr($1, new Operator(@2,"&&"),$3);}
+			;
+
+Inclusive_Or_Expr	:	Exclusive_Or_Expr { $$ = $1; }
+			;
+
+Exclusive_Or_Expr	:	And_Expr { $$ = $1; }
+			;
+
+And_Expr		:	Equality_Expr	{ $$ = $1; }
+			;
+
+Equality_Expr		:	Relational_Expr { $$ = $1; }
+			|	Equality_Expr T_EQ Relational_Expr { $$ = new EqualityExpr($1, new Operator(@2, "=="), $3); }
+			|	Equality_Expr T_NE Relational_Expr {$$ = new EqualityExpr($1, new Operator(@2, "!="), $3); }
+			;
+
+Relational_Expr		:	Shift_Expr	{ $$ = $1; }
+			|	Relational_Expr T_LeftAngle Shift_Expr { $$ = new RelationalExpr($1, new Operator(@2,"<"), $3); } 
+			|	Relational_Expr T_RightAngle Shift_Expr { $$ = new RelationalExpr($1, new Operator(@2,">"), $3); }
+			|	Relational_Expr T_LessEqual Shift_Expr { $$ = new RelationalExpr($1, new Operator(@2, "<="), $3); }
+			|	Relational_Expr T_GreaterEqual Shift_Expr { $$ = new RelationalExpr($1, new Operator(@2,">="), $3); }
+			;
+
+Shift_Expr		:	Additive_Expr { $$ = $1; }
+			;
+
+Additive_Expr		:	Multiplicative_Expr { $$ = $1; }
+			|	Additive_Expr T_Plus Multiplicative_Expr { $$ = new ArithmeticExpr($1, new Operator(@2,"+"), $3); }
+			|	Additive_Expr T_Dash Multiplicative_Expr { $$ = new ArithmeticExpr($1, new Operator(@2,"-"), $3); }
+			;
+
+
+Multiplicative_Expr	:	Unary_Expr { $$ = $1; }
+			|	Multiplicative_Expr T_Star Unary_Expr { $$ = new ArithmeticExpr($1, new Operator(@2,"*"), $3); }
+			|	Multiplicative_Expr T_Slash Unary_Expr { $$ = new ArithmeticExpr($1, new Operator(@2,"/"), $3); }
+			;
+
+Unary_Expr		:	Postfix_Expr { $$ = $1; }
+			|	T_Inc Unary_Expr { $$ = new ArithmeticExpr(new Operator(@1,"++"), $2); }
+			|	T_Dec Unary_Expr { $$ = new ArithmeticExpr(new Operator(@1,"--"), $2); }
+			|	Unary_Operator Unary_Expr { $$ = new ArithmeticExpr($1, $2); }
+			;
+
+Unary_Operator		:	T_Plus { $$ = new Operator(@1,"+"); }
+			|	T_Dash { $$ = new Operator(@1,"-"); }
+			;
+
+
+Postfix_Expr		:	Primary_Expr { $$ = $1; }
+			| 	Postfix_Expr T_LeftBracket Integer_Expr T_RightBracket { $$ = new ArrayAccess(@1,$1,$3);  }
+			|	Function_Call { $$ = $1; }
+			|	Postfix_Expr T_Dot T_Identifier { $$ = new FieldAccess($1, new Identifier(@3,$3));}
+			|	Postfix_Expr T_Inc { $$ = new PostfixExpr($1, new Operator(@2,"++"));}
+			|	Postfix_Expr T_Dec { $$ = new PostfixExpr($1, new Operator(@2,"--"));}
+			;
+
+Integer_Expr		:	Expr { $$ = $1; }
+
+
+Function_Call		:	Function_Call_Or_Method { $$ = $1; }
+			;
+
+Function_Call_Or_Method :	Function_Call_Generic { $$ = $1; }
+			;
+
+Function_Call_Generic	:	Function_Call_Header_With_Params T_RightParen { $$ = $1; }
+			|	Function_Call_Header_No_Params T_RightParen { $$ = $1; }
+			;
+
+Function_Call_Header_With_Params: Function_Call_Header Assignment_Expr { ($$=$1)->AppendArgs($2);}
+				| Function_Call_Header_With_Params T_Comma Assignment_Expr { ($$=$1)->AppendArgs($3);}
+
+Function_Call_Header_No_Params: Function_Call_Header T_Void { $$ = $1; }
+			      | Function_Call_Header { $$ = $1; }
+
+Function_Call_Header	:	Function_Identifier T_LeftParen {  $$ = new Call(@1,NULL,$1,new List<Expr*>());}
+			;
+
+Function_Identifier	:	T_Identifier	{ $$ = new Identifier(@1,$1);}
+			;
+
+Primary_Expr		:	Variable_Identifier { $$ = new VarExpr(@1,$1);}
+			|	T_IntConstant	{ $$ = new IntConstant(@1,$1);}
+			|	T_FloatConstant { $$ = new FloatConstant(@1,$1);}
+			|	T_BoolConstant  { $$ = new FloatConstant(@1,$1);}
+			|	T_LeftParen Expr T_RightParen	{ $$ = $2; };
+			;
+
+Variable_Identifier	:	T_Identifier { $$ = new Identifier(@1,$1); }
+			;
+
+Expr			:	Assignment_Expr { $$ = $1; }
+			|	Expr ',' Assignment_Expr { $$ = $1; }
+			;	
+
+	
+Single_Declaration	:	Fully_Specified_Type T_Identifier { $$ = new VarDecl(new Identifier(@2,$2),$1); }
+			;
+
 Parameter_Type_Specifier :	Type_Specifier { $$ = $1; }
+			 ;	
 
 Parameter_Declarator	:	Type_Specifier T_Identifier { $$= new VarDecl(new Identifier(@2,$2), $1); }
+			|	Type_Specifier T_Identifier T_LeftBracket T_IntConstant T_RightBracket { $$ = new VarDecl(new Identifier(@2,$2), new ArrayType(@1,$1)); }
 			;
 
 
@@ -156,6 +326,7 @@ Fully_Specified_Type	:	Type_Specifier	{ $$=$1; }
 
 Type_Specifier		:	Type_Specifier_Nonarray { $$=$1; }
 			;
+
 
 Type_Specifier_Nonarray :	T_Void  { $$ = Type::voidType; }
 			|	T_Float { $$ = Type::floatType; }

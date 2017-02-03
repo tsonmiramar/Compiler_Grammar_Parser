@@ -114,6 +114,9 @@ Call::Call(yyltype loc, Expr *b, Identifier *f, List<Expr*> *a) : Expr(loc)  {
     (actuals=a)->SetParentAll(this);
 }
 
+void Call::AppendArgs(Expr* a){
+	actuals->Append(a);
+}
 void Call::PrintChildren(int indentLevel) {
     if (base) base->Print(indentLevel+1);
     if (field) field->Print(indentLevel+1);

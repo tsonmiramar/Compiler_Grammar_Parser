@@ -32,6 +32,10 @@ VarDecl::VarDecl(Identifier *n, Type *t, TypeQualifier *tq, Expr *e) : Decl(n) {
     if (e) (assignTo=e)->SetParent(this);
 }
 
+void VarDecl::SetInitializer(Expr *initializer) {
+    assignTo=initializer;	
+}
+
 void VarDecl::PrintChildren(int indentLevel) {
    if (typeq) typeq->Print(indentLevel+1);
    if (type) type->Print(indentLevel+1);
