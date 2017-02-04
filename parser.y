@@ -105,6 +105,7 @@ void yyerror(const char *msg); // standard error-handling routine
 %type <type>	    Parameter_Type_Specifier
 %type <type>	    Fully_Specified_Type
 %type <type>	    Type_Specifier
+%type <type>	    Array_Specifier
 %type <type>	    Type_Specifier_Nonarray
 %type <ident>	    Variable_Identifier
 %type <ident>	    Function_Identifier
@@ -181,6 +182,7 @@ Init_Declarator_List	:	Single_Declaration	{ $$ = $1; }
 			;
 
 Single_Declaration      :       Fully_Specified_Type T_Identifier { $$ = new VarDecl(new Identifier(@2,$2),$1); }
+			|	Fully_Specified_Type T_Identifier Array_Specifier { $$ = new VarDecl(new Identifier(@2,$2), new ArrayType(@1,$1)); }
 			|	Fully_Specified_Type T_Identifier T_Equal Initializer { $$ = new VarDecl(new Identifier(@2,$2),$1, $4); }
                         ;
 
@@ -312,8 +314,10 @@ Parameter_Type_Specifier :	Type_Specifier { $$ = $1; }
 			 ;	
 
 Parameter_Declarator	:	Type_Specifier T_Identifier { $$= new VarDecl(new Identifier(@2,$2), $1); }
-			|	Type_Specifier T_Identifier T_LeftBracket T_IntConstant T_RightBracket { $$ = new VarDecl(new Identifier(@2,$2), new ArrayType(@1,$1)); }
+			|	Type_Specifier T_Identifier Array_Specifier { $$ = new VarDecl(new Identifier(@2,$2), new ArrayType(@1,$1)); }
 			;
+
+Array_Specifier		:	T_LeftBracket T_IntConstant T_RightBracket { $$ = '\0'; }
 
 
 Function_Header		:	Fully_Specified_Type T_Identifier T_LeftParen {
