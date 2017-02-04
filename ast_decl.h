@@ -43,7 +43,6 @@ class VarDecl : public Decl
     VarDecl(Identifier *name, Type *type, Expr *assignTo = NULL);
     VarDecl(Identifier *name, TypeQualifier *typeq, Expr *assignTo = NULL);
     VarDecl(Identifier *name, Type *type, TypeQualifier *typeq, Expr *assignTo = NULL);
-    void SetInitializer(Expr *initializer);
     const char *GetPrintNameForNode() { return "VarDecl"; }
     void PrintChildren(int indentLevel);
 };

@@ -178,8 +178,11 @@ Parameter_Declaration	:	Parameter_Declarator 	 { $$ = $1; }
 			;
 
 Init_Declarator_List	:	Single_Declaration	{ $$ = $1; }
-			|	Init_Declarator_List T_Equal Initializer { $$ = $1; $$->SetInitializer($3);}
 			;
+
+Single_Declaration      :       Fully_Specified_Type T_Identifier { $$ = new VarDecl(new Identifier(@2,$2),$1); }
+			|	Fully_Specified_Type T_Identifier T_Equal Initializer { $$ = new VarDecl(new Identifier(@2,$2),$1, $4); }
+                        ;
 
 Initializer		:	Assignment_Expr { $$ = $1; }
 			;
@@ -305,9 +308,6 @@ Expr			:	Assignment_Expr { $$ = $1; }
 			;	
 
 	
-Single_Declaration	:	Fully_Specified_Type T_Identifier { $$ = new VarDecl(new Identifier(@2,$2),$1); }
-			;
-
 Parameter_Type_Specifier :	Type_Specifier { $$ = $1; }
 			 ;	
 
