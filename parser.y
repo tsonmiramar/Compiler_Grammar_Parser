@@ -306,7 +306,6 @@ Variable_Identifier	:	T_Identifier { $$ = new Identifier(@1,$1); }
 			;
 
 Expr			:	Assignment_Expr { $$ = $1; }
-			|	Expr ',' Assignment_Expr { $$ = $1; }
 			;	
 
 	
