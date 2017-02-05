@@ -38,8 +38,6 @@ void yyerror(const char *msg); // standard error-handling routine
  * pp2: You will need to add new fields to this union as you add different
  *      attributes to your non-terminal symbols.
  */
-%expect 1
-
 %code requires {
 	struct FullyType {
 		Type* type_specifier;
@@ -184,6 +182,8 @@ void yyerror(const char *msg); // standard error-handling routine
 %type <op>	    Assignment_Operator
 %type <op>	    Unary_Operator
 
+%nonassoc "then"
+%nonassoc T_Else
 %%
 /* Rules
  * -----
@@ -250,7 +250,7 @@ Selection_Statement  : T_If T_LeftParen Expr T_RightParen Selection_Rest_Stateme
 		     ;
 
 Selection_Rest_Statement : Statement_With_Scope T_Else Statement_With_Scope { $$ = new IfStmt(new EmptyExpr(), $1, $3); }
-			 | Statement_With_Scope { $$ = new IfStmt(new EmptyExpr(), $1, NULL); }
+			 | Statement_With_Scope %prec "then" { $$ = new IfStmt(new EmptyExpr(), $1, NULL); }
 			 ;
 
 Switch_Statement	:	T_Switch T_LeftParen Expr T_RightParen T_LeftBrace Case_List T_RightBrace { $$ = new SwitchStmt($3, $6, NULL);}
