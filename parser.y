@@ -257,7 +257,7 @@ Switch_Statement	:	T_Switch T_LeftParen Expr T_RightParen T_LeftBrace Case_List 
 			|	T_Switch T_LeftParen Expr T_RightParen T_LeftBrace Case_List Default_Statement T_RightBrace { $$ = new SwitchStmt($3,$6,$7);}
 
 Case_List		:	Case_Statement { ($$ = new List<Case*>())->Append($1); }
-			|	Case_List Case_Statement { ($$ = new List<Case*>())->Append($2); }
+			|	Case_List Case_Statement { ($$ = $1)->Append($2); }
 
 Case_Statement		:	Case_Label Switch_Statement_List { $$ = new Case($1,$2->getStmtList()); }
 			;
@@ -328,7 +328,8 @@ Init_Declarator_List	:	Single_Declaration	{ $$ = $1; }
 Single_Declaration      :       Fully_Specified_Type T_Identifier { $$ = new VarDecl(new Identifier(@2,$2),$1.type_specifier); 
 								    if ( $1.type_qualifier != NULL ) $$->SetTypeQualifier($1.type_qualifier);
 								  }
-			|	Fully_Specified_Type T_Identifier Array_Specifier { $$ = new VarDecl(new Identifier(@2,$2), new ArrayType(@1,$1.type_specifier), $1.type_qualifier); }
+			|	Fully_Specified_Type T_Identifier Array_Specifier { $$ = new VarDecl(new Identifier(@2,$2), new ArrayType(@1,$1.type_specifier));
+if ($1.type_qualifier != NULL) $$->SetTypeQualifier($1.type_qualifier); }
 			|	Fully_Specified_Type T_Identifier T_Equal Initializer { $$ = new VarDecl(new Identifier(@2,$2),$1.type_specifier,$4); 
     if ( $1.type_qualifier != NULL ) $$->SetTypeQualifier($1.type_qualifier);
 			}
@@ -442,13 +443,14 @@ Function_Call_Header_No_Params: Function_Call_Header T_Void { $$ = $1; }
 Function_Call_Header	:	Function_Identifier T_LeftParen {  $$ = new Call(@1,NULL,$1,new List<Expr*>());}
 			;
 
-Function_Identifier	:	T_Identifier	{ $$ = new Identifier(@1,$1);}
+Function_Identifier	:	Type_Specifier	{ $$ = new Identifier(@1,$1->getTypeName()); }
+			|	Variable_Identifier {  $$ = $1; }
 			;
 
 Primary_Expr		:	Variable_Identifier { $$ = new VarExpr(@1,$1);}
 			|	T_IntConstant	{ $$ = new IntConstant(@1,$1);}
 			|	T_FloatConstant { $$ = new FloatConstant(@1,$1);}
-			|	T_BoolConstant  { $$ = new FloatConstant(@1,$1);}
+			|	T_BoolConstant  { $$ = new BoolConstant(@1,$1);}
 			|	T_LeftParen Expr T_RightParen	{ $$ = $2; }
 			;
 

@@ -44,6 +44,7 @@ class Type : public Node
     Type(yyltype loc) : Node(loc) {}
     Type(const char *str);
 
+    const char *getTypeName() { return typeName; }
     const char *GetPrintNameForNode() { return "Type"; }
     void PrintChildren(int indentLevel);
 };
