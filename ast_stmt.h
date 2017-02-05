@@ -41,6 +41,12 @@ class Stmt : public Node
      Stmt(yyltype loc) : Node(loc) {}
 };
 
+class EmptyStmt : public Stmt
+{
+  public:
+     const char *GetPrintNameForNode() { return "Empty"; }
+};
+
 class StmtBlock : public Stmt
 {
   protected:
@@ -49,6 +55,9 @@ class StmtBlock : public Stmt
 
   public:
     StmtBlock(List<VarDecl*> *variableDeclarations, List<Stmt*> *statements);
+    void AppendVarDecl(VarDecl* varDecl);
+    void AppendStmt(Stmt* stmt);
+    List<Stmt*> *getStmtList();
     const char *GetPrintNameForNode() { return "StmtBlock"; }
     void PrintChildren(int indentLevel);
 };
@@ -63,6 +72,8 @@ class ConditionalStmt : public Stmt
   public:
     ConditionalStmt() : Stmt(), test(NULL), body(NULL) {}
     ConditionalStmt(Expr *testExpr, Stmt *body);
+    void SetTestExpr(Expr* testExpr);
+    void SetBody(Stmt* b);
 };
 
 class LoopStmt : public ConditionalStmt
@@ -70,6 +81,7 @@ class LoopStmt : public ConditionalStmt
   public:
     LoopStmt(Expr *testExpr, Stmt *body)
             : ConditionalStmt(testExpr, body) {}
+    void SetBody(Stmt* b);
 };
 
 class ForStmt : public LoopStmt
@@ -79,6 +91,8 @@ class ForStmt : public LoopStmt
 
   public:
     ForStmt(Expr *init, Expr *test, Expr *step, Stmt *body);
+    void SetInit(Expr* i);
+    void SetBody(Stmt* b);
     const char *GetPrintNameForNode() { return "ForStmt"; }
     void PrintChildren(int indentLevel);
 };
@@ -107,6 +121,7 @@ class IfStmt : public ConditionalStmt
   public:
     IfStmt() : ConditionalStmt(), elseBody(NULL) {}
     IfStmt(Expr *test, Stmt *thenBody, Stmt *elseBody);
+    void SetTestExpr(Expr *test);
     const char *GetPrintNameForNode() { return "IfStmt"; }
     void PrintChildren(int indentLevel);
 };

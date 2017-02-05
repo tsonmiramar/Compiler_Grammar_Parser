@@ -32,6 +32,11 @@ VarDecl::VarDecl(Identifier *n, Type *t, TypeQualifier *tq, Expr *e) : Decl(n) {
     if (e) (assignTo=e)->SetParent(this);
 }
 
+void VarDecl::SetTypeQualifier(TypeQualifier* tq){
+	Assert(tq != NULL);
+	(typeq=tq)->SetParent(this);
+}
+
 void VarDecl::PrintChildren(int indentLevel) {
    if (typeq) typeq->Print(indentLevel+1);
    if (type) type->Print(indentLevel+1);
@@ -61,6 +66,11 @@ void FnDecl::SetFunctionBody(Stmt *b) {
 
 void FnDecl::AppendParameterDeclaration(VarDecl* varDelc) {
     formals->Append(varDelc);
+}
+
+void FnDecl::SetTypeQualifier(TypeQualifier* typeq){
+	Assert(typeq!= NULL);
+	(returnTypeq=typeq)->SetParent(this);
 }
 
 void FnDecl::PrintChildren(int indentLevel) {

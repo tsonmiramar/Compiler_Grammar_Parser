@@ -29,16 +29,52 @@ void StmtBlock::PrintChildren(int indentLevel) {
     stmts->PrintAll(indentLevel+1);
 }
 
+void StmtBlock::AppendVarDecl(VarDecl* varDecl) {
+	decls->Append(varDecl);	
+}
+
+void StmtBlock::AppendStmt(Stmt* stmt) {
+	stmts->Append(stmt);
+}
+
+List<Stmt*>* StmtBlock::getStmtList(){
+	return stmts;
+}
+
 ConditionalStmt::ConditionalStmt(Expr *t, Stmt *b) {
     Assert(t != NULL && b != NULL);
     (test=t)->SetParent(this);
     (body=b)->SetParent(this);
 }
 
+void ConditionalStmt::SetTestExpr(Expr *testExpr){
+    delete test; //free the old reference first before pointing to new Expr
+    (test = testExpr)->SetParent(this);
+}
+
+void ConditionalStmt::SetBody(Stmt* b){
+	delete body; //Free the old ref before point to new ref
+	(body=b)->SetParent(this);
+}
+
+void LoopStmt::SetBody(Stmt* b){
+	ConditionalStmt::SetBody(b);
+}
+
 ForStmt::ForStmt(Expr *i, Expr *t, Expr *s, Stmt *b): LoopStmt(t, b) {
     Assert(i != NULL && t != NULL && s != NULL && b != NULL);
     (init=i)->SetParent(this);
     (step=s)->SetParent(this);
+}
+
+void ForStmt::SetInit(Expr *i){
+	Assert(i != NULL);
+	delete init;
+	(init=i)->SetParent(this);
+}
+
+void ForStmt::SetBody(Stmt* b){
+	LoopStmt::SetBody(b);
 }
 
 void ForStmt::PrintChildren(int indentLevel) {
@@ -59,9 +95,13 @@ void DoWhileStmt::PrintChildren(int indentLevel) {
 }
 
 IfStmt::IfStmt(Expr *t, Stmt *tb, Stmt *eb): ConditionalStmt(t, tb) {
-    Assert(t != NULL && tb != NULL); // else can be NULL
+    Assert( t != NULL && tb !=NULL ); // else can be NULL 
     elseBody = eb;
     if (elseBody) elseBody->SetParent(this);
+}
+
+void IfStmt::SetTestExpr(Expr *test) {
+	ConditionalStmt::SetTestExpr(test);
 }
 
 void IfStmt::PrintChildren(int indentLevel) {

@@ -43,6 +43,7 @@ class VarDecl : public Decl
     VarDecl(Identifier *name, Type *type, Expr *assignTo = NULL);
     VarDecl(Identifier *name, TypeQualifier *typeq, Expr *assignTo = NULL);
     VarDecl(Identifier *name, Type *type, TypeQualifier *typeq, Expr *assignTo = NULL);
+    void SetTypeQualifier(TypeQualifier* typeq);
     const char *GetPrintNameForNode() { return "VarDecl"; }
     void PrintChildren(int indentLevel);
 };
@@ -68,6 +69,7 @@ class FnDecl : public Decl
     FnDecl(Identifier *name, Type *returnType, TypeQualifier *returnTypeq, List<VarDecl*> *formals);
     void SetFunctionBody(Stmt *b);
     void AppendParameterDeclaration(VarDecl* varDecl);
+    void SetTypeQualifier(TypeQualifier* typeq);
     const char *GetPrintNameForNode() { return "FnDecl"; }
     void PrintChildren(int indentLevel);
 };
